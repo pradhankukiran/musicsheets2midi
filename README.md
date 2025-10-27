@@ -1,30 +1,62 @@
-# Music sheets to MIDI
+# Music Sheets to MIDI
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+A web application that converts sheet music images into MIDI files using optical music recognition (OMR).
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/pradhankukiran-projects/v0-music-sheets-to-midi)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/2yCL5csyPJO)
+## Features
 
-## Overview
+- Upload sheet music images in various formats
+- Optical music recognition to extract musical notation
+- MIDI file generation from recognized music
+- Modern, responsive UI built with Next.js
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## Getting Started
 
-## Deployment
+### Prerequisites
 
-Your project is live at:
+- Node.js (version 16 or higher)
+- pnpm package manager
 
-**[https://vercel.com/pradhankukiran-projects/v0-music-sheets-to-midi](https://vercel.com/pradhankukiran-projects/v0-music-sheets-to-midi)**
+### Installation
 
-## Build your app
+1. Clone the repository
+2. Install dependencies:
 
-Continue building your app on:
+```bash
+pnpm install
+```
 
-**[https://v0.app/chat/projects/2yCL5csyPJO](https://v0.app/chat/projects/2yCL5csyPJO)**
+### Development
 
-## How It Works
+Run the development server:
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Build
+
+Build the application for production:
+
+```bash
+pnpm build
+```
+
+### Start Production Server
+
+```bash
+pnpm start
+```
+
+## Tech Stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Radix UI components
+
+## License
+
+This project is private and not licensed for public use.

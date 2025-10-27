@@ -7,9 +7,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Music Sheets to MIDI',
+  description: 'Convert sheet music images to MIDI files using optical music recognition',
 }
 
 export default function RootLayout({
