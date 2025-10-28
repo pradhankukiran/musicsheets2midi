@@ -317,9 +317,9 @@ export default function FileUploadArea() {
   return (
     <div className="space-y-8">
       {/* Ornamental Header */}
-      <div className="text-center py-8 border-2 border-primary/20 rounded-xl bg-card">
+      <div className="text-center py-8 px-4 border-2 border-primary/20 rounded-xl bg-card">
         <div className="space-y-3">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-[0.2em] bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-[0.08em] sm:tracking-[0.15em] md:tracking-[0.2em] leading-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
             MusicSheets2MIDI
           </h1>
           <div className="flex items-center justify-center gap-3">
@@ -361,7 +361,7 @@ export default function FileUploadArea() {
           </div>
 
           <div className="text-center space-y-4">
-            <h2 className="text-2xl md:text-3xl font-bold tracking-[0.15em] text-foreground">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-[0.08em] sm:tracking-[0.12em] md:tracking-[0.15em] leading-tight text-foreground">
               Upload Your Music Sheet
             </h2>
             <div className="ornamental-divider max-w-md mx-auto">
