@@ -152,4 +152,250 @@
     height: 2px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
   }
+
+  /* Islamic Arch Portal Styles */
+  .arch-portal {
+    position: relative;
+    border-radius: 0.5rem 0.5rem 0 0;
+    clip-path: polygon(
+      0 20%,
+      0 100%,
+      100% 100%,
+      100% 20%,
+      95% 15%,
+      90% 10%,
+      85% 7%,
+      80% 5%,
+      75% 3%,
+      70% 2%,
+      65% 1%,
+      60% 0.5%,
+      55% 0.2%,
+      50% 0,
+      45% 0.2%,
+      40% 0.5%,
+      35% 1%,
+      30% 2%,
+      25% 3%,
+      20% 5%,
+      15% 7%,
+      10% 10%,
+      5% 15%
+    );
+  }
+
+  .arch-frame {
+    position: relative;
+    padding: 2rem;
+    border: 2px solid oklch(0.62 0.19 45 / 0.3);
+    border-radius: 1rem;
+  }
+
+  .arch-frame::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: 10%;
+    right: 10%;
+    height: 60px;
+    background:
+      radial-gradient(ellipse at top, var(--primary) 0%, transparent 70%);
+    border-radius: 50% 50% 0 0;
+    border: 2px solid oklch(0.62 0.19 45 / 0.3);
+    border-bottom: none;
+    clip-path: ellipse(45% 100% at 50% 0%);
+  }
+
+
+  /* Ornamental Divider with Geometric Pattern */
+  .ornamental-divider {
+    position: relative;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    margin: 2rem 0;
+  }
+
+  .ornamental-divider::before,
+  .ornamental-divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) rotate(45deg);
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    box-shadow: 0 0 10px oklch(0.62 0.19 45 / 0.5);
+  }
+
+  .ornamental-divider::before {
+    left: 0;
+  }
+
+  .ornamental-divider::after {
+    right: 0;
+  }
+
+  .ornamental-divider .center-ornament {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+  }
+
+  .ornamental-divider .center-ornament::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: var(--primary);
+    transform: translate(-50%, -50%) rotate(45deg);
+    box-shadow: 0 0 8px oklch(0.62 0.19 45 / 0.4);
+  }
+
+  /* Pointed Arch Card */
+  .pointed-arch-card {
+    position: relative;
+    background: var(--card);
+    border: 2px solid oklch(0.62 0.19 45 / 0.3);
+    border-radius: 0.75rem;
+    overflow: visible;
+  }
+
+  .pointed-arch-card::before {
+    content: "";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 30px solid var(--primary);
+    opacity: 0.2;
+  }
+
+  /* Small Arch Button Style */
+  .arch-button {
+    position: relative;
+    border-radius: 0.5rem 0.5rem 0 0;
+    overflow: hidden;
+  }
+
+  .arch-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    border-radius: 50%;
+  }
+
+  /* Geometric Background Pattern */
+  .geometric-bg {
+    background-color: var(--background);
+    background-image:
+      linear-gradient(to bottom, var(--background), var(--background), oklch(0.68 0.17 55 / 0.05)),
+      repeating-linear-gradient(45deg, transparent, transparent 35px, oklch(0.62 0.19 45 / 0.15) 35px, oklch(0.62 0.19 45 / 0.15) 70px),
+      repeating-linear-gradient(-45deg, transparent, transparent 35px, oklch(0.68 0.17 55 / 0.15) 35px, oklch(0.68 0.17 55 / 0.15) 70px);
+  }
+
+  /* Gold Border Glow Effect */
+  .gold-glow {
+    box-shadow:
+      0 0 20px oklch(0.62 0.19 45 / 0.1),
+      inset 0 0 20px oklch(0.62 0.19 45 / 0.05);
+  }
+
+  /* Arabesque Watermark */
+  .arabesque-watermark {
+    position: relative;
+  }
+
+  .arabesque-watermark::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 120px;
+    height: 120px;
+    background: var(--primary);
+    opacity: 0.03;
+    clip-path: polygon(
+      50% 0%, 61% 35%, 98% 35%, 68% 57%,
+      79% 91%, 50% 70%, 21% 91%, 32% 57%,
+      2% 35%, 39% 35%
+    );
+    pointer-events: none;
+  }
+
+  /* Inline Diamond Shape */
+  .ornament-diamond {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+    transform: rotate(45deg);
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  /* Inline Star Shape */
+  .ornament-star {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: currentColor;
+    clip-path: polygon(
+      50% 0%, 61% 35%, 98% 35%, 68% 57%,
+      79% 91%, 50% 70%, 21% 91%, 32% 57%,
+      2% 35%, 39% 35%
+    );
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  /* Music Note Ornament */
+  .ornament-note {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    position: relative;
+  }
+
+  .ornament-note::before {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: currentColor;
+    border-radius: 50%;
+    bottom: 0;
+    left: 0;
+    box-shadow: 0 0 6px currentColor;
+  }
+
+  .ornament-note::after {
+    content: "";
+    position: absolute;
+    width: 2px;
+    height: 12px;
+    background: currentColor;
+    bottom: 4px;
+    left: 5px;
+    box-shadow: 0 0 4px currentColor;
+  }
 }

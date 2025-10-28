@@ -22,6 +22,7 @@ type AudioState = {
   url: string
   filename?: string
   programNumber: number
+  soundfont: string
 }
 
 const INSTRUMENTS: { value: string; label: string }[] = [
@@ -32,6 +33,7 @@ const INSTRUMENTS: { value: string; label: string }[] = [
   { value: "41", label: "Viola" },
   { value: "42", label: "Cello" },
   { value: "46", label: "Harp" },
+  { value: "50", label: "Turkish Oud" },
   { value: "56", label: "Trumpet" },
   { value: "57", label: "Trombone" },
   { value: "60", label: "French Horn" },
@@ -186,13 +188,16 @@ export default function FileUploadArea() {
     return data
   }
 
+  const resolveSoundfont = (program: number) => (program === 50 ? "persian" : "gm")
+
   const midiToAudio = async (midi_b64: string, programNumber: number) => {
+    const soundfont = resolveSoundfont(programNumber)
     const response = await fetch(`${PROXY_BASE}/audio-instrument`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ midi_b64, program_number: programNumber }),
+      body: JSON.stringify({ midi_b64, program: programNumber, soundfont }),
     })
 
     if (!response.ok) {
@@ -208,7 +213,7 @@ export default function FileUploadArea() {
       throw new Error("No audio returned from conversion service.")
     }
 
-    return data
+    return { ...data, soundfont }
   }
 
   const extractMxlPayload = (payload: any) => {
@@ -296,6 +301,7 @@ export default function FileUploadArea() {
           `${midiState.filename?.replace(/\.mid$/, "") || "converted"}_${programNumber}.${audioFormat}`,
         url: audioUrl,
         programNumber,
+        soundfont: audioData.soundfont,
       })
 
       setStatusMsg("Audio ready. Hit play or download the WAV file.")
@@ -309,39 +315,62 @@ export default function FileUploadArea() {
   }
 
   return (
-    <Card
-      className={`border-2 border-dashed transition-all duration-300 ornament-top ornament-bottom ${
-        isDragging
-          ? "border-primary bg-gradient-to-br from-primary/20 to-accent/15 shadow-lg"
-          : "border-primary/30 bg-card hover:border-primary/50 hover:shadow-md"
-      }`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="flex flex-col items-center justify-center gap-8 px-6 md:px-12 py-16 md:py-24">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-wider bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+    <div className="space-y-8">
+      {/* Ornamental Header */}
+      <div className="text-center py-8 border-2 border-primary/20 rounded-xl bg-card">
+        <div className="space-y-3">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-[0.2em] bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
             MusicSheets2MIDI
           </h1>
-          <p className="text-xs md:text-sm text-muted-foreground font-medium tracking-widest uppercase">
-            by MaqAura
-          </p>
-        </div>
-
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-2xl" />
-          <div className="relative rounded-full bg-gradient-to-br from-primary/20 to-accent/10 p-6 border border-primary/20">
-            <Upload className="h-10 w-10 text-primary" />
+          <div className="flex items-center justify-center gap-3">
+            <span className="ornament-diamond text-primary opacity-50"></span>
+            <p className="text-xs md:text-sm text-muted-foreground font-light tracking-[0.3em] uppercase">
+              by MaqAura
+            </p>
+            <span className="ornament-diamond text-primary opacity-50"></span>
           </div>
         </div>
+      </div>
 
-        <div className="text-center space-y-3">
-          <h2 className="text-2xl md:text-3xl font-light tracking-wide text-foreground">Upload Your Music Sheet</h2>
-          <p className="text-sm md:text-base text-muted-foreground font-light">
-            Drag and drop your file here, or click to browse
-          </p>
-        </div>
+      {/* Main Upload Portal with Islamic Arch */}
+      <Card
+        className={`border-2 border-dashed transition-all duration-300 gold-glow arabesque-watermark ${
+          isDragging
+            ? "border-primary bg-gradient-to-br from-primary/20 to-accent/15 shadow-2xl scale-[1.02]"
+            : "border-primary/30 bg-card hover:border-primary/50 hover:shadow-xl"
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="flex flex-col items-center justify-center gap-8 px-6 md:px-12 py-12 md:py-16">
+
+          {/* Arch Portal Icon */}
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-accent/30 rounded-full blur-3xl" />
+            <div className="relative">
+              <div className="w-24 h-32 mx-auto mb-4">
+                <div className="w-full h-full border-4 border-primary/40 bg-gradient-to-b from-primary/10 to-accent/5 rounded-t-full"
+                     style={{ borderRadius: "50% 50% 0 0" }}>
+                  <div className="flex items-end justify-center h-full pb-4">
+                    <Upload className="h-12 w-12 text-primary" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-[0.15em] text-foreground">
+              Upload Your Music Sheet
+            </h2>
+            <div className="ornamental-divider max-w-md mx-auto">
+              <div className="center-ornament"></div>
+            </div>
+            <p className="text-sm md:text-base text-muted-foreground font-light tracking-wide">
+              Drag and drop your file here, or click to browse
+            </p>
+          </div>
 
         <input
           ref={fileInputRef}
@@ -352,160 +381,194 @@ export default function FileUploadArea() {
           disabled={isProcessing}
         />
 
-        <div className="flex flex-col items-center gap-4 w-full">
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isProcessing}
-            size="lg"
-            className="px-10 py-6 bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:shadow-lg transition-all duration-300 font-light tracking-wide"
-          >
-            {isProcessing ? "Processing..." : "Select File"}
-          </Button>
+          <div className="flex flex-col items-center gap-4 w-full">
+            <Button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isProcessing}
+              size="lg"
+              className="arch-button px-12 py-7 bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:shadow-2xl hover:scale-105 transition-all duration-300 font-light tracking-[0.2em]"
+            >
+              {isProcessing ? "Processing..." : "Select File"}
+            </Button>
 
-          {file && (
-            <div className="flex flex-row items-center justify-center gap-3 w-full flex-wrap animate-in fade-in-0 slide-in-from-top-2 duration-300">
-              <Button
-                onClick={handleConvert}
-                disabled={isProcessing}
-                size="lg"
-                className="px-10 py-6 bg-card text-foreground border border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide"
-              >
-                {isProcessing ? "Converting..." : "Convert"}
-              </Button>
-              <Button
-                onClick={handleClear}
-                disabled={isProcessing || isFetchingAudio}
-                size="lg"
-                variant="ghost"
-                className="px-10 py-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300 font-light tracking-wide"
-              >
-                <X className="h-4 w-4 mr-2" />
-                Clear
-              </Button>
+            {file && (
+              <div className="flex flex-row items-center justify-center gap-3 w-full flex-wrap animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                <Button
+                  onClick={handleConvert}
+                  disabled={isProcessing}
+                  size="lg"
+                  className="arch-button px-10 py-6 bg-card text-foreground border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide"
+                >
+                  {isProcessing ? "Converting..." : "Convert"}
+                </Button>
+                <Button
+                  onClick={handleClear}
+                  disabled={isProcessing || isFetchingAudio}
+                  size="lg"
+                  variant="ghost"
+                  className="px-10 py-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300 font-light tracking-wide"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Clear
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {statusMsg && (
+            <div className="w-full animate-in fade-in-0 duration-500">
+              <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-accent/5">
+                <div className="flex items-center justify-center gap-4 px-6 py-5">
+                  {isProcessing || isFetchingAudio ? (
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-xl" />
+                      <Loader2 className="h-6 w-6 text-primary animate-spin relative" />
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-xl" />
+                      <CheckCircle2 className="h-6 w-6 text-primary relative" />
+                    </div>
+                  )}
+                  <p className="text-sm text-foreground font-light tracking-wide text-center">{statusMsg}</p>
+                </div>
+              </Card>
             </div>
           )}
-        </div>
 
-        {statusMsg && (
-          <div className="w-full animate-in fade-in-0 duration-500">
-            <Card className="border border-primary/30 bg-gradient-to-br from-primary/10 to-accent/5 ornament-top ornament-bottom">
-              <div className="flex items-center justify-center gap-4 px-6 py-4">
-                {isProcessing || isFetchingAudio ? (
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-xl" />
-                    <Loader2 className="h-5 w-5 text-primary animate-spin relative" />
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-xl" />
-                    <CheckCircle2 className="h-5 w-5 text-primary relative" />
-                  </div>
-                )}
-                <p className="text-sm text-foreground font-light tracking-wide text-center">{statusMsg}</p>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {errorMsg && (
-          <div className="w-full animate-in fade-in-0 duration-500">
-            <Card className="border border-destructive/50 bg-destructive/5">
-              <div className="px-6 py-4">
-                <p className="text-sm text-destructive font-medium text-center">{errorMsg}</p>
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {midiState && (
-          <Card className="w-full border-2 border-dashed border-primary/30 bg-gradient-to-br from-card to-accent/5 hover:border-primary/50 transition-all duration-300 ornament-top ornament-bottom">
-            <div className="p-6 space-y-5">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <p className="text-xs font-light tracking-widest text-muted-foreground uppercase">Instrument</p>
-                  <h3 className="text-lg font-light text-foreground">Choose a sound for playback</h3>
+          {errorMsg && (
+            <div className="w-full animate-in fade-in-0 duration-500">
+              <Card className="border-2 border-destructive/50 bg-destructive/5">
+                <div className="px-6 py-5">
+                  <p className="text-sm text-destructive font-medium text-center tracking-wide">{errorMsg}</p>
                 </div>
-                <Select
-                  value={selectedInstrument}
-                  onValueChange={(value) => {
-                    setSelectedInstrument(value)
-                    if (audioState) {
-                      revokeUrl(audioState.url)
-                      setAudioState(null)
-                      setStatusMsg("Instrument changed. Generate a new preview.")
-                    }
-                  }}
-                >
-                  <SelectTrigger className="w-full md:w-64 bg-background/60">
-                    <SelectValue placeholder="Select instrument" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INSTRUMENTS.map((instrument) => (
-                      <SelectItem key={instrument.value} value={instrument.value}>
-                        {instrument.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  onClick={handlePreviewAudio}
-                  disabled={isFetchingAudio}
-                  className="bg-gradient-to-r from-secondary to-primary text-secondary-foreground hover:shadow-md transition-all duration-300 font-light tracking-wide"
-                >
-                  {isFetchingAudio ? "Rendering Audio..." : "Preview Audio"}
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  className="border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide"
-                >
-                  <a href={midiState.url} download={midiState.filename || "output.mid"}>
-                    Download MIDI
-                  </a>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  disabled={!audioState}
-                  className="border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <a
-                    href={audioState?.url || "#"}
-                    download={audioState?.filename || "output.wav"}
-                    aria-disabled={!audioState}
-                  >
-                    Download WAV
-                  </a>
-                </Button>
-              </div>
-
-              {audioState && (
-                <div className="space-y-2">
-                  <p className="text-xs font-light tracking-widest text-muted-foreground uppercase">
-                    Preview ({audioState.format.toUpperCase()})
-                  </p>
-                  <audio controls src={audioState.url} className="w-full">
-                    Your browser does not support the audio element.
-                  </audio>
-                </div>
-              )}
-
-              <div className="text-xs text-muted-foreground">
-                {mxlFilename && <p>MusicXML source: {mxlFilename}</p>}
-                <p>
-                  MIDI file size:{" "}
-                  {Math.max(1, Math.round(((midiState.b64.length * 3) / 4) / 1024))} KB
-                </p>
-              </div>
+              </Card>
             </div>
-          </Card>
-        )}
+          )}
 
-        <p className="text-xs text-muted-foreground font-light tracking-widest uppercase">PNG, JPG, or PDF</p>
-      </div>
-    </Card>
+          {midiState && (
+            <div className="w-full mt-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+              <div className="ornamental-divider">
+                <div className="center-ornament" />
+              </div>
+              <Card className="pointed-arch-card gold-glow bg-gradient-to-br from-card to-accent/5 hover:shadow-2xl transition-all duration-300">
+                <div className="p-6 md:p-8 space-y-6">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase flex items-center gap-2">
+                        <span className="ornament-diamond text-primary"></span>
+                        Instrument
+                      </p>
+                      <h3 className="text-lg md:text-xl font-light text-foreground tracking-wide mt-1">
+                        Choose a sound for playback
+                      </h3>
+                    </div>
+                    <Select
+                      value={selectedInstrument}
+                      onValueChange={(value) => {
+                        setSelectedInstrument(value)
+                        if (audioState) {
+                          revokeUrl(audioState.url)
+                          setAudioState(null)
+                          setStatusMsg("Instrument changed. Generate a new preview.")
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full md:w-72 bg-background/60 border-primary/30 hover:border-primary/50">
+                        <SelectValue placeholder="Select instrument" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INSTRUMENTS.map((instrument) => (
+                          <SelectItem key={instrument.value} value={instrument.value}>
+                            {instrument.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                    <Button
+                      onClick={handlePreviewAudio}
+                      disabled={isFetchingAudio}
+                      className="arch-button bg-gradient-to-r from-secondary to-primary text-secondary-foreground hover:shadow-xl hover:scale-105 transition-all duration-300 font-light tracking-wide"
+                    >
+                      {isFetchingAudio ? "Rendering Audio..." : "Preview Audio"}
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="arch-button border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide"
+                    >
+                      <a href={midiState.url} download={midiState.filename || "output.mid"}>
+                        Download MIDI
+                      </a>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      disabled={!audioState}
+                      className="arch-button border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <a
+                        href={audioState?.url || "#"}
+                        download={audioState?.filename || "output.wav"}
+                        aria-disabled={!audioState}
+                      >
+                        Download WAV
+                      </a>
+                    </Button>
+                  </div>
+
+                  {audioState && (
+                    <div className="space-y-3 pt-4 border-t border-primary/20">
+                      <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase flex items-center gap-2">
+                        <span className="ornament-note text-accent"></span>
+                        Preview ({audioState.format.toUpperCase()})
+                      </p>
+                      <audio
+                        controls
+                        src={audioState.url}
+                        className="w-full h-12 rounded-lg"
+                        style={{ accentColor: "var(--primary)" }}
+                      >
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
+
+                  {/* <div className="text-xs text-muted-foreground font-light space-y-1 pt-4 border-t border-primary/10">
+                    {mxlFilename && (
+                      <p className="flex items-center gap-2">
+                        <span className="ornament-diamond text-primary"></span>
+                        MusicXML source: {mxlFilename}
+                      </p>
+                    )}
+                    <p className="flex items-center gap-2">
+                      <span className="ornament-diamond text-primary"></span>
+                      MIDI file size: {Math.max(1, Math.round(((midiState.b64.length * 3) / 4) / 1024))} KB
+                    </p>
+                    {audioState && (
+                      <p className="flex items-center gap-2">
+                        <span className="ornament-diamond text-primary"></span>
+                        Audio soundfont: {audioState.soundfont} (program {audioState.programNumber})
+                      </p>
+                    )}
+                  </div> */}
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* <div className="flex items-center justify-center gap-3 pt-4">
+            <span className="ornament-diamond text-primary/50"></span>
+            <p className="text-xs text-muted-foreground font-light tracking-[0.2em] uppercase">
+              PNG, JPG, or PDF
+            </p>
+            <span className="ornament-diamond text-primary/50"></span>
+          </div> */}
+        </div>
+      </Card>
+    </div>
   )
 }
