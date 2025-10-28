@@ -871,28 +871,36 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
   }
 
   return (
-    <div className="w-full space-y-4 p-4 border rounded-lg bg-card">
+    <div className="w-full space-y-4 p-3 md:p-4 border rounded-lg bg-card">
       {/* Main Controls */}
-      <div className="flex items-center gap-2">
-        <Button size="icon" variant="outline" onClick={handleRestart} disabled={isLoading}>
-          <SkipBack className="h-4 w-4" />
-        </Button>
-
-        {!isPlaying ? (
-          <Button size="icon" onClick={handlePlay} disabled={isLoading || isRecording}>
-            <Play className="h-4 w-4" />
+      <div className="space-y-3">
+        {/* Buttons Row */}
+        <div className="flex items-center justify-center gap-2">
+          <Button size="icon" variant="outline" onClick={handleRestart} disabled={isLoading}>
+            <SkipBack className="h-4 w-4" />
           </Button>
-        ) : (
-          <Button size="icon" variant="outline" onClick={handlePause}>
-            <Pause className="h-4 w-4" />
+
+          {!isPlaying ? (
+            <Button size="icon" onClick={handlePlay} disabled={isLoading || isRecording}>
+              <Play className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button size="icon" variant="outline" onClick={handlePause}>
+              <Pause className="h-4 w-4" />
+            </Button>
+          )}
+
+          <Button size="icon" variant="outline" onClick={handleStop} disabled={isLoading}>
+            <Square className="h-4 w-4" />
           </Button>
-        )}
 
-        <Button size="icon" variant="outline" onClick={handleStop} disabled={isLoading}>
-          <Square className="h-4 w-4" />
-        </Button>
+          <Button size="icon" variant="outline" onClick={handleExportToWav} disabled={isLoading || isRecording}>
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
 
-        <div className="flex-1 mx-4">
+        {/* Seekbar Row */}
+        <div className="space-y-2">
           <Slider
             value={[progress]}
             max={duration || 100}
@@ -901,34 +909,36 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
             disabled={isLoading}
             className="cursor-pointer"
           />
+          <div className="text-xs md:text-sm text-muted-foreground text-center">
+            {formatTime(progress)} / {formatTime(duration)}
+          </div>
         </div>
-
-        <div className="text-sm text-muted-foreground min-w-[80px] text-right">
-          {formatTime(progress)} / {formatTime(duration)}
-        </div>
-
-        <Button size="icon" variant="outline" onClick={handleExportToWav} disabled={isLoading || isRecording}>
-          <Download className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Master Controls */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center gap-2">
-          <Volume2 className="h-4 w-4" />
-          <span className="text-sm font-medium min-w-[60px]">Vol: {volume}%</span>
+      <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 md:gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Volume2 className="h-4 w-4" />
+              <span className="text-sm font-medium">Volume</span>
+            </div>
+            <span className="text-sm font-medium">{volume}%</span>
+          </div>
           <Slider
             value={[volume]}
             max={100}
             step={1}
             onValueChange={handleVolumeChange}
             disabled={isLoading}
-            className="flex-1"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium min-w-[80px]">Tempo: {tempo}%</span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Tempo</span>
+            <span className="text-sm font-medium">{tempo}%</span>
+          </div>
           <Slider
             value={[tempo]}
             min={25}
@@ -936,12 +946,14 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
             step={5}
             onValueChange={handleTempoChange}
             disabled={isLoading}
-            className="flex-1"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium min-w-[80px]">Rate: {playbackRate}%</span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Rate</span>
+            <span className="text-sm font-medium">{playbackRate}%</span>
+          </div>
           <Slider
             value={[playbackRate]}
             min={25}
@@ -949,12 +961,14 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
             step={5}
             onValueChange={handlePlaybackRateChange}
             disabled={isLoading}
-            className="flex-1"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium min-w-[100px]">Pitch: {pitchShift > 0 ? '+' : ''}{pitchShift}</span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Pitch</span>
+            <span className="text-sm font-medium">{pitchShift > 0 ? '+' : ''}{pitchShift}</span>
+          </div>
           <Slider
             value={[pitchShift]}
             min={-12}
@@ -962,19 +976,18 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
             step={1}
             onValueChange={handlePitchShiftChange}
             disabled={isLoading}
-            className="flex-1"
           />
         </div>
       </div>
 
       {/* Advanced Controls Tabs */}
       <Tabs defaultValue="tracks" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="tracks">Tracks</TabsTrigger>
-          <TabsTrigger value="effects">Effects</TabsTrigger>
-          <TabsTrigger value="eq">EQ/Filter</TabsTrigger>
-          <TabsTrigger value="loop">Loop</TabsTrigger>
-          <TabsTrigger value="visual">Visualizer</TabsTrigger>
+        <TabsList className="w-full h-auto flex flex-wrap md:grid md:grid-cols-5 gap-1 p-1">
+          <TabsTrigger value="tracks" className="flex-1 min-w-[80px] text-xs md:text-sm">Tracks</TabsTrigger>
+          <TabsTrigger value="effects" className="flex-1 min-w-[80px] text-xs md:text-sm">Effects</TabsTrigger>
+          <TabsTrigger value="eq" className="flex-1 min-w-[80px] text-xs md:text-sm">EQ</TabsTrigger>
+          <TabsTrigger value="loop" className="flex-1 min-w-[80px] text-xs md:text-sm">Loop</TabsTrigger>
+          <TabsTrigger value="visual" className="flex-1 min-w-[80px] text-xs md:text-sm">Visual</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tracks" className="space-y-2">

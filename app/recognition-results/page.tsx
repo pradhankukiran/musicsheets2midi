@@ -43,24 +43,24 @@ export default function RecognitionResultsPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background via-background to-accent/5">
-      <div className="container mx-auto px-4 py-12 md:py-16">
+      <div className="container mx-auto px-4 py-6 md:py-12 lg:py-16">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-5 md:mb-8 space-y-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-light tracking-wide text-foreground">Recognition Results</h1>
-              <p className="text-muted-foreground font-light mt-2">{fileName}</p>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-light tracking-wide text-foreground">Recognition Results</h1>
+              <p className="text-muted-foreground font-light mt-2 break-words text-sm md:text-base">{fileName}</p>
             </div>
             <Button
               onClick={() => router.push("/")}
               variant="outline"
-              className="gap-2 bg-transparent border-primary/30 hover:bg-primary/10"
+              className="gap-2 bg-transparent border-primary/30 hover:bg-primary/10 w-full md:w-auto"
             >
               <ArrowLeft className="h-4 w-4" />
               New Upload
             </Button>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <RecognitionPreview data={recognitionData} fileName={fileName} />
             <MidiExporter recognitionData={recognitionData} fileName={fileName} />
           </div>

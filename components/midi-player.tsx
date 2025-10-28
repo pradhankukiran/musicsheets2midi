@@ -166,45 +166,49 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
   }
 
   return (
-    <div className="w-full space-y-4 p-4 border rounded-lg bg-card">
-      <div className="flex items-center gap-2">
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={handleRestart}
-          disabled={isLoading}
-        >
-          <SkipBack className="h-4 w-4" />
-        </Button>
-
-        {!isPlaying ? (
-          <Button
-            size="icon"
-            onClick={handlePlay}
-            disabled={isLoading}
-          >
-            <Play className="h-4 w-4" />
-          </Button>
-        ) : (
+    <div className="w-full space-y-4 p-3 md:p-4 border rounded-lg bg-card">
+      <div className="space-y-3">
+        {/* Buttons Row */}
+        <div className="flex items-center justify-center gap-2">
           <Button
             size="icon"
             variant="outline"
-            onClick={handlePause}
+            onClick={handleRestart}
+            disabled={isLoading}
           >
-            <Pause className="h-4 w-4" />
+            <SkipBack className="h-4 w-4" />
           </Button>
-        )}
 
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={handleStop}
-          disabled={isLoading}
-        >
-          <Square className="h-4 w-4" />
-        </Button>
+          {!isPlaying ? (
+            <Button
+              size="icon"
+              onClick={handlePlay}
+              disabled={isLoading}
+            >
+              <Play className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={handlePause}
+            >
+              <Pause className="h-4 w-4" />
+            </Button>
+          )}
 
-        <div className="flex-1 mx-4">
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={handleStop}
+            disabled={isLoading}
+          >
+            <Square className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Seekbar Row */}
+        <div className="space-y-2">
           <Slider
             value={[progress]}
             max={duration || 100}
@@ -213,17 +217,17 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
             disabled={isLoading}
             className="cursor-pointer"
           />
-        </div>
-
-        <div className="text-sm text-muted-foreground min-w-[80px] text-right">
-          {formatTime(progress)} / {formatTime(duration)}
+          <div className="text-xs md:text-sm text-muted-foreground text-center">
+            {formatTime(progress)} / {formatTime(duration)}
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-medium min-w-[80px]">
-          Tempo: {tempo}%
-        </span>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium">Tempo</span>
+          <span className="text-sm font-medium">{tempo}%</span>
+        </div>
         <Slider
           value={[tempo]}
           min={25}
@@ -231,7 +235,6 @@ export function MidiPlayer({ midiBase64 }: MidiPlayerProps) {
           step={5}
           onValueChange={handleTempoChange}
           disabled={isLoading}
-          className="flex-1"
         />
       </div>
 

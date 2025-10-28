@@ -44,22 +44,19 @@ export default function MidiExporter({ recognitionData, fileName }: MidiExporter
   }
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-accent/10 to-secondary/10 p-6 md:p-8 ornament-top ornament-bottom">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-        <div className="flex items-start md:items-center gap-4 flex-1">
-          
-          <div>
-            <h3 className="font-light tracking-wide text-foreground">Ready to Export</h3>
-            <p className="text-sm text-muted-foreground font-light mt-1">Convert recognized notes to MIDI format</p>
-          </div>
+    <Card className="border-primary/20 bg-gradient-to-r from-primary/10 via-accent/10 to-secondary/10 p-5 md:p-8 ornament-top ornament-bottom">
+      <div className="space-y-5">
+        <div>
+          <h3 className="text-xl md:text-2xl font-light tracking-wide text-foreground">Ready to Export</h3>
+          <p className="text-sm md:text-base text-muted-foreground font-light mt-2">Convert recognized notes to MIDI format</p>
         </div>
         <Button
           onClick={generateMidi}
           disabled={isExporting}
           size="lg"
-          className="gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:shadow-lg transition-all duration-300 font-light tracking-wide whitespace-nowrap"
+          className="gap-2 bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:shadow-lg transition-all duration-300 font-light tracking-wide w-full md:w-auto md:px-10"
         >
-          <Download className="h-4 w-4" />
+          <Download className="h-5 w-5" />
           {isExporting ? "Exporting..." : "Export MIDI"}
         </Button>
       </div>

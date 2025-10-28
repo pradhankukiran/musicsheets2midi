@@ -15,13 +15,13 @@ export default function RecognitionPreview({ data, fileName }: RecognitionPrevie
   const key = data.key || "C Major"
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5 p-6 md:p-8 ornament-top ornament-bottom">
-      <div className="mb-8">
+    <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5 p-5 md:p-8 ornament-top ornament-bottom">
+      <div className="mb-5 md:mb-8">
         <p className="text-xs font-light tracking-widest text-muted-foreground uppercase">Recognition Results</p>
-        <h3 className="mt-2 text-xl md:text-2xl font-light tracking-wide text-foreground">{fileName}</h3>
+        <h3 className="mt-2 text-xl md:text-2xl font-light tracking-wide text-foreground break-words">{fileName}</h3>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="mb-5 md:mb-8 flex flex-col gap-3 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4">
         {[
           { label: "Tempo", value: `${tempo} BPM`, color: "from-primary" },
           { label: "Time Signature", value: timeSignature, color: "from-accent" },
@@ -33,12 +33,12 @@ export default function RecognitionPreview({ data, fileName }: RecognitionPrevie
             className={`rounded-lg bg-gradient-to-br ${item.color}/15 to-transparent p-4 border border-${item.color.split("-")[1]}/20`}
           >
             <p className="text-xs font-light tracking-widest text-muted-foreground uppercase">{item.label}</p>
-            <p className="mt-3 text-lg md:text-xl font-light text-foreground">{item.value}</p>
+            <p className="mt-2 text-2xl md:text-xl font-light text-foreground">{item.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="h-px bg-gradient-to-r from-primary/20 via-accent/20 to-transparent mb-8" />
+      <div className="h-px bg-gradient-to-r from-primary/20 via-accent/20 to-transparent mb-5 md:mb-8" />
 
       <div>
         <p className="text-xs font-light tracking-widest text-muted-foreground uppercase mb-4">Recognized Notes</p>
@@ -47,14 +47,14 @@ export default function RecognitionPreview({ data, fileName }: RecognitionPrevie
             <Badge
               key={idx}
               variant="secondary"
-              className="font-mono bg-secondary/20 text-secondary-foreground hover:bg-secondary/30 font-light"
+              className="font-mono bg-secondary/20 text-secondary-foreground hover:bg-secondary/30 font-light text-sm px-3 py-1"
             >
               {note.pitch}
               {note.duration && <span className="ml-1 text-xs">({note.duration})</span>}
             </Badge>
           ))}
           {notes.length > 20 && (
-            <Badge variant="outline" className="text-muted-foreground font-light">
+            <Badge variant="outline" className="text-muted-foreground font-light text-sm px-3 py-1">
               +{notes.length - 20} more
             </Badge>
           )}
