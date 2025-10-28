@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, CheckCircle2, Loader2, X } from "lucide-react"
+import { Upload, CheckCircle2, Loader2, X, FileText } from "lucide-react"
+import { ScoreViewer } from "@/components/score-viewer"
 
 const PROXY_BASE = "/api/backend/convert"
 
@@ -52,6 +53,8 @@ export default function FileUploadArea() {
   const [statusMsg, setStatusMsg] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
   const [midiState, setMidiState] = useState<MidiState | null>(null)
+  const [musicXmlState, setMusicXmlState] = useState<{ b64: string; filename: string } | null>(null)
+  const [isScoreOverlayOpen, setIsScoreOverlayOpen] = useState(false)
   const [audioState, setAudioState] = useState<AudioState | null>(null)
   const [mxlFilename, setMxlFilename] = useState<string>("")
   const [selectedInstrument, setSelectedInstrument] = useState<string>("0")
@@ -78,6 +81,7 @@ export default function FileUploadArea() {
     revokeUrl(audioState?.url)
     setMidiState(null)
     setAudioState(null)
+    setMusicXmlState(null)
     setMxlFilename("")
     setStatusMsg("")
     setErrorMsg("")
@@ -92,12 +96,28 @@ export default function FileUploadArea() {
     }
   }
 
+  const handleOpenScore = () => {
+    if (musicXmlState) {
+      setIsScoreOverlayOpen(true)
+    }
+  }
+
+  const handleCloseScore = () => {
+    setIsScoreOverlayOpen(false)
+  }
+
   useEffect(() => {
     return () => {
       revokeUrl(midiState?.url)
       revokeUrl(audioState?.url)
     }
   }, [midiState?.url, audioState?.url])
+
+  useEffect(() => {
+    if (!musicXmlState) {
+      setIsScoreOverlayOpen(false)
+    }
+  }, [musicXmlState])
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -250,7 +270,9 @@ export default function FileUploadArea() {
         throw new Error("No MusicXML data returned from the conversion service.")
       }
 
-      setMxlFilename(mxl_filename || file.name.replace(/\.[^/.]+$/, "") + ".mxl")
+      const resolvedMxlFilename = mxl_filename || file.name.replace(/\.[^/.]+$/, "") + ".mxl"
+      setMxlFilename(resolvedMxlFilename)
+      setMusicXmlState({ b64: mxl_b64, filename: resolvedMxlFilename })
 
       setStatusMsg("Converting MusicXML to MIDI...")
       const midiData = await mxlToMidi(mxl_b64)
@@ -315,7 +337,8 @@ export default function FileUploadArea() {
   }
 
   return (
-    <div className="space-y-8">
+    <>
+      <div className="space-y-8">
       {/* Ornamental Header */}
       <div className="text-center py-8 px-4 border-2 border-primary/20 rounded-xl bg-card">
         <div className="space-y-3">
@@ -496,6 +519,34 @@ export default function FileUploadArea() {
                       {isFetchingAudio ? "Rendering Audio..." : "Preview Audio"}
                     </Button>
                     <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={handleOpenScore}
+                      disabled={!musicXmlState || !audioState}
+                      className="border-primary/40 hover:border-primary transition-colors"
+                    >
+                      <FileText className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {audioState && (
+                    <div className="space-y-3 pt-4 border-t border-primary/20">
+                      <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase">
+                        Preview ({audioState.format.toUpperCase()})
+                      </p>
+                      <audio
+                        controls
+                        src={audioState.url}
+                        className="w-full h-12 rounded-lg"
+                        style={{ accentColor: "var(--primary)" }}
+                      >
+                        Your browser does not support the audio element.
+                      </audio>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-3 justify-center md:justify-start border-t border-primary/20 pt-4">
+                    <Button
                       asChild
                       variant="outline"
                       className="arch-button border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide"
@@ -519,23 +570,6 @@ export default function FileUploadArea() {
                       </a>
                     </Button>
                   </div>
-
-                  {audioState && (
-                    <div className="space-y-3 pt-4 border-t border-primary/20">
-                      <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase flex items-center gap-2">
-                        <span className="ornament-note text-accent"></span>
-                        Preview ({audioState.format.toUpperCase()})
-                      </p>
-                      <audio
-                        controls
-                        src={audioState.url}
-                        className="w-full h-12 rounded-lg"
-                        style={{ accentColor: "var(--primary)" }}
-                      >
-                        Your browser does not support the audio element.
-                      </audio>
-                    </div>
-                  )}
 
                   {/* <div className="text-xs text-muted-foreground font-light space-y-1 pt-4 border-t border-primary/10">
                     {mxlFilename && (
@@ -570,5 +604,28 @@ export default function FileUploadArea() {
         </div>
       </Card>
     </div>
+
+    {isScoreOverlayOpen && musicXmlState && (
+      <div className="fixed inset-0 z-50">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={handleCloseScore} />
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl items-center justify-center p-4">
+          <div className="relative w-full max-h-[90vh] overflow-hidden rounded-2xl border border-primary/30 bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Sheet Preview</p>
+                <h3 className="text-lg font-light tracking-wide text-foreground">{musicXmlState.filename}</h3>
+              </div>
+              <Button variant="ghost" size="icon" onClick={handleCloseScore}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="max-h-[calc(90vh-120px)] overflow-auto px-4 pb-6 pt-4">
+              <ScoreViewer musicXmlBase64={musicXmlState.b64} audioUrl={audioState?.url} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
