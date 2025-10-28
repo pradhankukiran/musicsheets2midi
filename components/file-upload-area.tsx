@@ -5,7 +5,8 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Upload } from "lucide-react"
+import { Upload, CheckCircle2, Loader2, X } from "lucide-react"
+import { MidiPlayer } from "@/components/midi-player-advanced"
 
 const API_BASE = "http://3.110.112.30:8000"
 const PROXY_BASE = "/api/backend/convert"
@@ -28,6 +29,7 @@ export default function FileUploadArea() {
   const [errorMsg, setErrorMsg] = useState("")
   const [results, setResults] = useState<ConversionResult[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
 
   const makeBlobUrlFromBase64 = (b64: string, mimeType: string) => {
     const binary = atob(b64)
@@ -51,11 +53,29 @@ export default function FileUploadArea() {
     setResults([])
   }
 
+  const handleClear = () => {
+    setFile(null)
+    resetResults()
+    setStatusMsg("")
+    setErrorMsg("")
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
   useEffect(() => {
     return () => {
       revokeUrls(results)
     }
   }, [results])
+
+  useEffect(() => {
+    if (results.length > 0 && !loading && resultsRef.current) {
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      }, 300)
+    }
+  }, [results, loading])
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -231,6 +251,15 @@ export default function FileUploadArea() {
       onDrop={handleDrop}
     >
       <div className="flex flex-col items-center justify-center gap-8 px-6 md:px-12 py-16 md:py-24">
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-wider bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+            MusicSheets2MIDI
+          </h1>
+          <p className="text-xs md:text-sm text-muted-foreground font-medium tracking-widest uppercase">
+            by MaqAura
+          </p>
+        </div>
+
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-2xl" />
           <div className="relative rounded-full bg-gradient-to-br from-primary/20 to-accent/10 p-6 border border-primary/20">
@@ -263,46 +292,114 @@ export default function FileUploadArea() {
           >
             {loading ? "Processing..." : "Select File"}
           </Button>
-          <Button
-            onClick={handleConvert}
-            disabled={loading}
-            size="lg"
-            className="px-10 py-6 bg-card text-foreground border border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide"
-          >
-            {loading ? "Converting..." : "Convert"}
-          </Button>
+
+          {file && (
+            <div className="flex flex-row items-center justify-center gap-3 w-full flex-wrap animate-in fade-in-0 slide-in-from-top-2 duration-300">
+              <Button
+                onClick={handleConvert}
+                disabled={loading}
+                size="lg"
+                className="px-10 py-6 bg-card text-foreground border border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide"
+              >
+                {loading ? "Converting..." : "Convert"}
+              </Button>
+              <Button
+                onClick={handleClear}
+                disabled={loading}
+                size="lg"
+                variant="ghost"
+                className="px-10 py-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300 font-light tracking-wide"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
 
-        {statusMsg && <p className="text-sm text-foreground font-light">{statusMsg}</p>}
-        {errorMsg && <p className="text-sm text-destructive font-medium">{errorMsg}</p>}
+        {statusMsg && (
+          <div className="w-full animate-in fade-in-0 duration-500">
+            <Card className="border border-primary/30 bg-gradient-to-br from-primary/10 to-accent/5 ornament-top ornament-bottom">
+              <div className="flex items-center justify-center gap-4 px-6 py-4">
+                {loading ? (
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-xl" />
+                    <Loader2 className="h-5 w-5 text-primary animate-spin relative" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-xl" />
+                    <CheckCircle2 className="h-5 w-5 text-primary relative" />
+                  </div>
+                )}
+                <p className="text-sm text-foreground font-light tracking-wide">{statusMsg}</p>
+              </div>
+            </Card>
+          </div>
+        )}
+        {errorMsg && (
+          <div className="w-full animate-in fade-in-0 duration-500">
+            <Card className="border border-destructive/50 bg-destructive/5">
+              <div className="px-6 py-4">
+                <p className="text-sm text-destructive font-medium text-center">{errorMsg}</p>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {results.length > 0 && (
-          <div className="w-full space-y-6 text-left mt-4">
-            {results.map((result) => (
-              <div key={result.page} className="rounded-lg border border-primary/30 bg-card/80 p-6 space-y-4">
-                <p className="text-sm font-light tracking-wide text-muted-foreground uppercase">
-                  Page {result.page}
-                </p>
-                <div className="flex flex-wrap gap-4">
-                  <a
-                    href={result.mxlUrl}
-                    download={result.mxl_filename || `page${result.page}.mxl`}
-                    className="text-primary underline underline-offset-4 text-sm"
-                  >
-                    Download MusicXML
-                  </a>
-                  <a
-                    href={result.midiUrl}
-                    download={result.midi_filename || `page${result.page}.mid`}
-                    className="text-primary underline underline-offset-4 text-sm"
-                  >
-                    Download MIDI
-                  </a>
+          <div ref={resultsRef} className="w-full space-y-6 text-left mt-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
+            {results.map((result, index) => (
+              <Card
+                key={result.page}
+                className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-card to-accent/5 hover:border-primary/50 hover:shadow-lg transition-all duration-300 ornament-top ornament-bottom"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="p-6 space-y-5">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-lg" />
+                      <div className="relative rounded-full bg-gradient-to-br from-primary/20 to-accent/10 p-2 border border-primary/20">
+                        <CheckCircle2 className="h-4 w-4 text-primary" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-light tracking-widest text-muted-foreground uppercase">
+                      Page {result.page}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      asChild
+                      size="sm"
+                      className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-md transition-all duration-300 font-light tracking-wide"
+                    >
+                      <a
+                        href={result.mxlUrl}
+                        download={result.mxl_filename || `page${result.page}.mxl`}
+                      >
+                        Download MusicXML
+                      </a>
+                    </Button>
+                    <Button
+                      asChild
+                      size="sm"
+                      className="bg-gradient-to-r from-secondary to-primary text-secondary-foreground hover:shadow-md transition-all duration-300 font-light tracking-wide"
+                    >
+                      <a
+                        href={result.midiUrl}
+                        download={result.midi_filename || `page${result.page}.mid`}
+                      >
+                        Download MIDI
+                      </a>
+                    </Button>
+                  </div>
+
+                  <div className="pt-2">
+                    <MidiPlayer midiBase64={result.midi_b64} />
+                  </div>
                 </div>
-                <audio controls className="w-full" src={result.midiUrl}>
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
+              </Card>
             ))}
           </div>
         )}

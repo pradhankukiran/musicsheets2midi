@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Music Sheets to MIDI',
+  title: 'Music Sheets 2 MIDI',
   description: 'Convert sheet music images to MIDI files using optical music recognition',
 }
 
