@@ -5,31 +5,55 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, CheckCircle2, Loader2, X } from "lucide-react"
-import { MidiPlayer } from "@/components/midi-player-advanced"
 
-const API_BASE = "http://3.110.112.30:8000"
 const PROXY_BASE = "/api/backend/convert"
 
-type ConversionResult = {
-  page: number
-  mxl_b64: string
-  mxl_filename?: string
-  midi_b64: string
-  midi_filename?: string
-  mxlUrl: string
-  midiUrl: string
+type MidiState = {
+  b64: string
+  filename?: string
+  url: string
 }
+
+type AudioState = {
+  b64: string
+  format: string
+  url: string
+  filename?: string
+  programNumber: number
+}
+
+const INSTRUMENTS: { value: string; label: string }[] = [
+  { value: "0", label: "Piano (Acoustic Grand)" },
+  { value: "24", label: "Guitar (Nylon)" },
+  { value: "32", label: "Bass (Acoustic)" },
+  { value: "40", label: "Violin" },
+  { value: "41", label: "Viola" },
+  { value: "42", label: "Cello" },
+  { value: "46", label: "Harp" },
+  { value: "56", label: "Trumpet" },
+  { value: "57", label: "Trombone" },
+  { value: "60", label: "French Horn" },
+  { value: "64", label: "Soprano Sax" },
+  { value: "71", label: "Clarinet" },
+  { value: "73", label: "Flute" },
+  { value: "74", label: "Recorder" },
+  { value: "104", label: "Sitar" },
+]
 
 export default function FileUploadArea() {
   const [isDragging, setIsDragging] = useState(false)
   const [file, setFile] = useState<File | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isFetchingAudio, setIsFetchingAudio] = useState(false)
   const [statusMsg, setStatusMsg] = useState("")
   const [errorMsg, setErrorMsg] = useState("")
-  const [results, setResults] = useState<ConversionResult[]>([])
+  const [midiState, setMidiState] = useState<MidiState | null>(null)
+  const [audioState, setAudioState] = useState<AudioState | null>(null)
+  const [mxlFilename, setMxlFilename] = useState<string>("")
+  const [selectedInstrument, setSelectedInstrument] = useState<string>("0")
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const resultsRef = useRef<HTMLDivElement>(null)
 
   const makeBlobUrlFromBase64 = (b64: string, mimeType: string) => {
     const binary = atob(b64)
@@ -41,23 +65,26 @@ export default function FileUploadArea() {
     return URL.createObjectURL(blob)
   }
 
-  const revokeUrls = (items: ConversionResult[]) => {
-    items.forEach((item) => {
-      URL.revokeObjectURL(item.mxlUrl)
-      URL.revokeObjectURL(item.midiUrl)
-    })
+  const revokeUrl = (url?: string) => {
+    if (url) {
+      URL.revokeObjectURL(url)
+    }
   }
 
-  const resetResults = () => {
-    revokeUrls(results)
-    setResults([])
+  const resetState = () => {
+    revokeUrl(midiState?.url)
+    revokeUrl(audioState?.url)
+    setMidiState(null)
+    setAudioState(null)
+    setMxlFilename("")
+    setStatusMsg("")
+    setErrorMsg("")
+    setSelectedInstrument("0")
   }
 
   const handleClear = () => {
     setFile(null)
-    resetResults()
-    setStatusMsg("")
-    setErrorMsg("")
+    resetState()
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
@@ -65,17 +92,10 @@ export default function FileUploadArea() {
 
   useEffect(() => {
     return () => {
-      revokeUrls(results)
+      revokeUrl(midiState?.url)
+      revokeUrl(audioState?.url)
     }
-  }, [results])
-
-  useEffect(() => {
-    if (results.length > 0 && !loading && resultsRef.current) {
-      setTimeout(() => {
-        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-      }, 300)
-    }
-  }, [results, loading])
+  }, [midiState?.url, audioState?.url])
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -116,8 +136,7 @@ export default function FileUploadArea() {
     }
 
     setFile(selectedFile)
-    resetResults()
-    setErrorMsg("")
+    resetState()
     setStatusMsg(`Selected: ${selectedFile.name}`)
   }
 
@@ -139,11 +158,7 @@ export default function FileUploadArea() {
     }
 
     const data = await response.json()
-    if (data.status !== "ok") {
-      throw new Error(data.error || "Conversion to MusicXML failed.")
-    }
-
-    return data
+    return { data, isPdf }
   }
 
   const mxlToMidi = async (mxl_b64: string) => {
@@ -160,11 +175,56 @@ export default function FileUploadArea() {
     }
 
     const data = await response.json()
-    if (data.status !== "ok") {
+    if (data.status && data.status !== "ok") {
       throw new Error(data.error || "Conversion to MIDI failed.")
     }
 
+    if (!data.midi_b64) {
+      throw new Error("No MIDI returned from conversion service.")
+    }
+
     return data
+  }
+
+  const midiToAudio = async (midi_b64: string, programNumber: number) => {
+    const response = await fetch(`${PROXY_BASE}/audio-instrument`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ midi_b64, program_number: programNumber }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Audio conversion failed with status ${response.status}`)
+    }
+
+    const data = await response.json()
+    if (data.status && data.status !== "ok") {
+      throw new Error(data.error || "Conversion to audio failed.")
+    }
+
+    if (!data.audio_b64) {
+      throw new Error("No audio returned from conversion service.")
+    }
+
+    return data
+  }
+
+  const extractMxlPayload = (payload: any) => {
+    if (Array.isArray(payload?.pages) && payload.pages.length > 0) {
+      const okPages = payload.pages.filter((page: any) => page.status === "ok" || !page.status)
+      const firstPage = (okPages.length > 0 ? okPages[0] : payload.pages[0]) ?? null
+      return {
+        mxl_b64: firstPage?.mxl_b64,
+        mxl_filename: firstPage?.mxl_filename,
+      }
+    }
+
+    return {
+      mxl_b64: payload?.mxl_b64,
+      mxl_filename: payload?.mxl_filename,
+    }
   }
 
   const handleConvert = async () => {
@@ -174,68 +234,77 @@ export default function FileUploadArea() {
     }
 
     try {
-      setLoading(true)
+      setIsProcessing(true)
       setErrorMsg("")
-      setStatusMsg("Converting to MusicXML...")
+      setStatusMsg("Uploading sheet and extracting MusicXML...")
 
-      const baseData = await postFileForXML(file)
+      const { data } = await postFileForXML(file)
+      const { mxl_b64, mxl_filename } = extractMxlPayload(data)
 
-      const pagesData =
-        Array.isArray(baseData.pages) && baseData.pages.length > 0
-          ? baseData.pages
-              .filter((page: any) => page.status === "ok")
-              .map((page: any) => ({
-                page: page.page ?? 1,
-                mxl_b64: page.mxl_b64,
-                mxl_filename: page.mxl_filename,
-              }))
-          : [
-              {
-                page: 1,
-                mxl_b64: baseData.mxl_b64,
-                mxl_filename: baseData.mxl_filename,
-              },
-            ]
-
-      if (pagesData.length === 0) {
-        throw new Error("No valid MusicXML data returned.")
+      if (!mxl_b64) {
+        throw new Error("No MusicXML data returned from the conversion service.")
       }
+
+      setMxlFilename(mxl_filename || file.name.replace(/\.[^/.]+$/, "") + ".mxl")
 
       setStatusMsg("Converting MusicXML to MIDI...")
+      const midiData = await mxlToMidi(mxl_b64)
 
-      const finalResults: ConversionResult[] = []
-
-      for (const page of pagesData) {
-        const midiData = await mxlToMidi(page.mxl_b64)
-        const mxlUrl = makeBlobUrlFromBase64(
-          page.mxl_b64,
-          "application/vnd.recordare.musicxml+xml"
-        )
-        const midiUrl = makeBlobUrlFromBase64(midiData.midi_b64, "audio/midi")
-
-        finalResults.push({
-          page: page.page ?? 1,
-          mxl_b64: page.mxl_b64,
-          mxl_filename: page.mxl_filename,
-          midi_b64: midiData.midi_b64,
-          midi_filename: midiData.midi_filename,
-          mxlUrl,
-          midiUrl,
-        })
-      }
-
-      setResults((prev) => {
-        revokeUrls(prev)
-        return finalResults
+      revokeUrl(midiState?.url)
+      const midiUrl = makeBlobUrlFromBase64(midiData.midi_b64, "audio/midi")
+      setMidiState({
+        b64: midiData.midi_b64,
+        filename: midiData.midi_filename || file.name.replace(/\.[^/.]+$/, "") + ".mid",
+        url: midiUrl,
       })
 
-      setStatusMsg("Done.")
+      revokeUrl(audioState?.url)
+      setAudioState(null)
+      setStatusMsg("MIDI ready. Choose an instrument to preview audio.")
     } catch (error) {
-      resetResults()
-      setStatusMsg("")
+      resetState()
       setErrorMsg(error instanceof Error ? error.message : "An unexpected error occurred.")
     } finally {
-      setLoading(false)
+      setIsProcessing(false)
+    }
+  }
+
+  const handlePreviewAudio = async () => {
+    if (!midiState) {
+      setErrorMsg("Generate MIDI before requesting audio.")
+      return
+    }
+
+    try {
+      setIsFetchingAudio(true)
+      setErrorMsg("")
+      setStatusMsg("Rendering audio with selected instrument...")
+
+      const programNumber = Number.parseInt(selectedInstrument, 10)
+      const audioData = await midiToAudio(midiState.b64, programNumber)
+      const audioFormat = (audioData.audio_format || "wav").toLowerCase()
+      const mimeType = audioFormat === "wav" ? "audio/wav" : `audio/${audioFormat}`
+
+      revokeUrl(audioState?.url)
+      const audioUrl = makeBlobUrlFromBase64(audioData.audio_b64, mimeType)
+
+      setAudioState({
+        b64: audioData.audio_b64,
+        format: audioFormat,
+        filename:
+          audioData.audio_filename ||
+          `${midiState.filename?.replace(/\.mid$/, "") || "converted"}_${programNumber}.${audioFormat}`,
+        url: audioUrl,
+        programNumber,
+      })
+
+      setStatusMsg("Audio ready. Hit play or download the WAV file.")
+    } catch (error) {
+      revokeUrl(audioState?.url)
+      setAudioState(null)
+      setErrorMsg(error instanceof Error ? error.message : "Failed to render audio preview.")
+    } finally {
+      setIsFetchingAudio(false)
     }
   }
 
@@ -280,32 +349,32 @@ export default function FileUploadArea() {
           accept=".pdf,image/png,image/jpeg"
           onChange={handleFileChange}
           className="hidden"
-          disabled={loading}
+          disabled={isProcessing}
         />
 
         <div className="flex flex-col items-center gap-4 w-full">
           <Button
             onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
+            disabled={isProcessing}
             size="lg"
             className="px-10 py-6 bg-gradient-to-r from-primary to-secondary text-primary-foreground hover:shadow-lg transition-all duration-300 font-light tracking-wide"
           >
-            {loading ? "Processing..." : "Select File"}
+            {isProcessing ? "Processing..." : "Select File"}
           </Button>
 
           {file && (
             <div className="flex flex-row items-center justify-center gap-3 w-full flex-wrap animate-in fade-in-0 slide-in-from-top-2 duration-300">
               <Button
                 onClick={handleConvert}
-                disabled={loading}
+                disabled={isProcessing}
                 size="lg"
                 className="px-10 py-6 bg-card text-foreground border border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide"
               >
-                {loading ? "Converting..." : "Convert"}
+                {isProcessing ? "Converting..." : "Convert"}
               </Button>
               <Button
                 onClick={handleClear}
-                disabled={loading}
+                disabled={isProcessing || isFetchingAudio}
                 size="lg"
                 variant="ghost"
                 className="px-10 py-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300 font-light tracking-wide"
@@ -321,7 +390,7 @@ export default function FileUploadArea() {
           <div className="w-full animate-in fade-in-0 duration-500">
             <Card className="border border-primary/30 bg-gradient-to-br from-primary/10 to-accent/5 ornament-top ornament-bottom">
               <div className="flex items-center justify-center gap-4 px-6 py-4">
-                {loading ? (
+                {isProcessing || isFetchingAudio ? (
                   <div className="relative">
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-xl" />
                     <Loader2 className="h-5 w-5 text-primary animate-spin relative" />
@@ -332,11 +401,12 @@ export default function FileUploadArea() {
                     <CheckCircle2 className="h-5 w-5 text-primary relative" />
                   </div>
                 )}
-                <p className="text-sm text-foreground font-light tracking-wide">{statusMsg}</p>
+                <p className="text-sm text-foreground font-light tracking-wide text-center">{statusMsg}</p>
               </div>
             </Card>
           </div>
         )}
+
         {errorMsg && (
           <div className="w-full animate-in fade-in-0 duration-500">
             <Card className="border border-destructive/50 bg-destructive/5">
@@ -347,61 +417,91 @@ export default function FileUploadArea() {
           </div>
         )}
 
-        {results.length > 0 && (
-          <div ref={resultsRef} className="w-full space-y-6 text-left mt-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-700">
-            {results.map((result, index) => (
-              <Card
-                key={result.page}
-                className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-card to-accent/5 hover:border-primary/50 hover:shadow-lg transition-all duration-300 ornament-top ornament-bottom"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="p-6 space-y-5">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 rounded-full blur-lg" />
-                      <div className="relative rounded-full bg-gradient-to-br from-primary/20 to-accent/10 p-2 border border-primary/20">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                      </div>
-                    </div>
-                    <p className="text-sm font-light tracking-widest text-muted-foreground uppercase">
-                      Page {result.page}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <Button
-                      asChild
-                      size="sm"
-                      className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:shadow-md transition-all duration-300 font-light tracking-wide"
-                    >
-                      <a
-                        href={result.mxlUrl}
-                        download={result.mxl_filename || `page${result.page}.mxl`}
-                      >
-                        Download MusicXML
-                      </a>
-                    </Button>
-                    <Button
-                      asChild
-                      size="sm"
-                      className="bg-gradient-to-r from-secondary to-primary text-secondary-foreground hover:shadow-md transition-all duration-300 font-light tracking-wide"
-                    >
-                      <a
-                        href={result.midiUrl}
-                        download={result.midi_filename || `page${result.page}.mid`}
-                      >
-                        Download MIDI
-                      </a>
-                    </Button>
-                  </div>
-
-                  <div className="pt-2">
-                    <MidiPlayer midiBase64={result.midi_b64} />
-                  </div>
+        {midiState && (
+          <Card className="w-full border-2 border-dashed border-primary/30 bg-gradient-to-br from-card to-accent/5 hover:border-primary/50 transition-all duration-300 ornament-top ornament-bottom">
+            <div className="p-6 space-y-5">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <p className="text-xs font-light tracking-widest text-muted-foreground uppercase">Instrument</p>
+                  <h3 className="text-lg font-light text-foreground">Choose a sound for playback</h3>
                 </div>
-              </Card>
-            ))}
-          </div>
+                <Select
+                  value={selectedInstrument}
+                  onValueChange={(value) => {
+                    setSelectedInstrument(value)
+                    if (audioState) {
+                      revokeUrl(audioState.url)
+                      setAudioState(null)
+                      setStatusMsg("Instrument changed. Generate a new preview.")
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full md:w-64 bg-background/60">
+                    <SelectValue placeholder="Select instrument" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INSTRUMENTS.map((instrument) => (
+                      <SelectItem key={instrument.value} value={instrument.value}>
+                        {instrument.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  onClick={handlePreviewAudio}
+                  disabled={isFetchingAudio}
+                  className="bg-gradient-to-r from-secondary to-primary text-secondary-foreground hover:shadow-md transition-all duration-300 font-light tracking-wide"
+                >
+                  {isFetchingAudio ? "Rendering Audio..." : "Preview Audio"}
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide"
+                >
+                  <a href={midiState.url} download={midiState.filename || "output.mid"}>
+                    Download MIDI
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  disabled={!audioState}
+                  className="border-primary/40 hover:bg-primary/10 transition-all duration-300 font-light tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <a
+                    href={audioState?.url || "#"}
+                    download={audioState?.filename || "output.wav"}
+                    aria-disabled={!audioState}
+                  >
+                    Download WAV
+                  </a>
+                </Button>
+              </div>
+
+              {audioState && (
+                <div className="space-y-2">
+                  <p className="text-xs font-light tracking-widest text-muted-foreground uppercase">
+                    Preview ({audioState.format.toUpperCase()})
+                  </p>
+                  <audio controls src={audioState.url} className="w-full">
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              )}
+
+              <div className="text-xs text-muted-foreground">
+                {mxlFilename && <p>MusicXML source: {mxlFilename}</p>}
+                <p>
+                  MIDI file size:{" "}
+                  {Math.max(1, Math.round(((midiState.b64.length * 3) / 4) / 1024))} KB
+                </p>
+              </div>
+            </div>
+          </Card>
         )}
 
         <p className="text-xs text-muted-foreground font-light tracking-widest uppercase">PNG, JPG, or PDF</p>
