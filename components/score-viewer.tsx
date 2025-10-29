@@ -412,8 +412,7 @@ export const ScoreViewer = forwardRef<ScoreViewerRef, ScoreViewerProps>(
     <div className="space-y-4">
       <div
         ref={containerRef}
-        className="w-full overflow-auto rounded-md border border-primary/20 bg-card/60 p-4"
-        style={{ minHeight: "260px" }}
+        className="w-full rounded-md border border-primary/20 bg-card/60 p-4 overflow-x-hidden"
       />
 
       {errorMessage && (

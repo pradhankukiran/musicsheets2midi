@@ -400,19 +400,13 @@ export default function FileUploadArea() {
   return (
     <>
       <div className="space-y-8">
-      {/* Ornamental Header */}
-      <div className="text-center py-8 px-4 border-2 border-primary/20 rounded-xl bg-card">
-        <div className="space-y-3">
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-[0.08em] sm:tracking-[0.15em] md:tracking-[0.2em] leading-tight bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
-            MusicSheets2MIDI
-          </h1>
-          <div className="flex items-center justify-center gap-3">
-            <span className="ornament-diamond text-primary opacity-50"></span>
-            <p className="text-xs md:text-sm text-muted-foreground font-light tracking-[0.3em] uppercase">
-              by MaqAura
-            </p>
-            <span className="ornament-diamond text-primary opacity-50"></span>
-          </div>
+      {/* Header */}
+      <div className="text-center py-6 px-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.08em] sm:tracking-[0.15em] md:tracking-[0.2em] leading-normal bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+          Music Sheets 2 MIDI
+        </h1>
+        <div className="ornamental-divider max-w-md mx-auto mt-4">
+          <div className="center-ornament"></div>
         </div>
       </div>
 
@@ -429,29 +423,22 @@ export default function FileUploadArea() {
       >
         <div className="flex flex-col items-center justify-center gap-8 px-6 md:px-12 py-12 md:py-16">
 
-          {/* Arch Portal Icon */}
+          {/* Upload Icon */}
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-accent/30 rounded-full blur-3xl" />
-            <div className="relative">
-              <div className="w-24 h-32 mx-auto mb-4">
-                <div className="w-full h-full border-4 border-primary/40 bg-gradient-to-b from-primary/10 to-accent/5 rounded-t-full"
-                     style={{ borderRadius: "50% 50% 0 0" }}>
-                  <div className="flex items-end justify-center h-full pb-4">
-                    <Upload className="h-12 w-12 text-primary" />
-                  </div>
-                </div>
-              </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/20 blur-2xl" style={{ transform: "rotate(45deg)" }} />
+            <div className="relative p-8 border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-accent/5" style={{ transform: "rotate(45deg)" }}>
+              <Upload className="h-12 w-12 text-primary" style={{ transform: "rotate(-45deg)" }} />
             </div>
           </div>
 
           <div className="text-center space-y-4">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-[0.08em] sm:tracking-[0.12em] md:tracking-[0.15em] leading-tight text-foreground">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-light tracking-[0.1em] leading-relaxed text-foreground/90">
               Upload Your Music Sheet
             </h2>
             <div className="ornamental-divider max-w-md mx-auto">
               <div className="center-ornament"></div>
             </div>
-            <p className="text-sm md:text-base text-muted-foreground font-light tracking-wide">
+            <p className="text-sm md:text-base text-muted-foreground/80 font-light tracking-[0.08em] leading-relaxed">
               Drag and drop your file here, or click to browse
             </p>
           </div>
@@ -514,7 +501,7 @@ export default function FileUploadArea() {
                       <CheckCircle2 className="h-6 w-6 text-primary relative" />
                     </div>
                   )}
-                  <p className="text-sm text-foreground font-light tracking-wide text-center">{statusMsg}</p>
+                  <p className="text-sm text-foreground/90 font-light tracking-[0.08em] text-center">{statusMsg}</p>
                 </div>
               </Card>
             </div>
@@ -524,113 +511,122 @@ export default function FileUploadArea() {
             <div className="w-full animate-in fade-in-0 duration-500">
               <Card className="border-2 border-destructive/50 bg-destructive/5">
                 <div className="px-6 py-5">
-                  <p className="text-sm text-destructive font-medium text-center tracking-wide">{errorMsg}</p>
+                  <p className="text-sm text-destructive font-light text-center tracking-[0.08em]">{errorMsg}</p>
                 </div>
               </Card>
             </div>
           )}
+        </div>
+      </Card>
 
-          {midiState && (
-            <div className="w-full mt-6 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
-              <div className="ornamental-divider">
-                <div className="center-ornament" />
+      {midiState && (
+        <div className="w-full animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+          <Card className="pointed-arch-card gold-glow bg-gradient-to-br from-card to-accent/5 hover:shadow-2xl transition-all duration-300 border-2 border-primary/30">
+            <div className="p-6 md:p-8 space-y-6">
+              {/* Results Header */}
+              <div className="text-center space-y-3 pb-4 border-b border-primary/20">
+                <h2 className="text-xl md:text-2xl font-bold tracking-[0.12em] bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent">
+                  Your Conversion Results
+                </h2>
+                <div className="ornamental-divider max-w-sm mx-auto">
+                  <div className="center-ornament"></div>
+                </div>
               </div>
-              <Card className="pointed-arch-card gold-glow bg-gradient-to-br from-card to-accent/5 hover:shadow-2xl transition-all duration-300">
-                <div className="p-6 md:p-8 space-y-6">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase flex items-center gap-2">
-                        <span className="ornament-diamond text-primary"></span>
-                        Instrument
-                      </p>
-                      <h3 className="text-lg md:text-xl font-light text-foreground tracking-wide mt-1">
-                        Choose a sound for playback
-                      </h3>
-                    </div>
-                    <Select
-                      value={selectedInstrument}
-                      onValueChange={(value) => {
-                        setSelectedInstrument(value)
-                        if (audioState) {
-                          revokeUrl(audioState.url)
-                          setAudioState(null)
-                          setStatusMsg("Instrument changed. Generate a new preview.")
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full md:w-72 bg-background/60 border-primary/30 hover:border-primary/50">
-                        <SelectValue placeholder="Select instrument" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INSTRUMENTS.map((instrument) => (
-                          <SelectItem key={instrument.value} value={instrument.value}>
-                            {instrument.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
 
-                  <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                    <Button
-                      onClick={handlePreviewAudio}
-                      disabled={isFetchingAudio}
-                      className="arch-button bg-gradient-to-r from-secondary to-primary text-secondary-foreground hover:shadow-xl hover:scale-105 transition-all duration-300 font-light tracking-wide"
-                    >
-                      {isFetchingAudio ? "Rendering Audio..." : "Preview Audio"}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={handleOpenScore}
-                      disabled={!musicXmlState || !audioState}
-                      className="border-primary/40 hover:border-primary transition-colors"
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                  </div>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase flex items-center gap-2">
+                    <span className="ornament-diamond text-primary"></span>
+                    Instrument
+                  </p>
+                  <h3 className="text-base md:text-lg font-light text-foreground/90 tracking-[0.05em] mt-1">
+                    Choose a sound for playback
+                  </h3>
+                </div>
+                <Select
+                  value={selectedInstrument}
+                  onValueChange={(value) => {
+                    setSelectedInstrument(value)
+                    if (audioState) {
+                      revokeUrl(audioState.url)
+                      setAudioState(null)
+                      setStatusMsg("Instrument changed. Generate a new preview.")
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full md:w-72 bg-background/60 border-primary/30 hover:border-primary/50">
+                    <SelectValue placeholder="Select instrument" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INSTRUMENTS.map((instrument) => (
+                      <SelectItem key={instrument.value} value={instrument.value}>
+                        {instrument.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  {audioState && (
-                    <div className="space-y-3 pt-4 border-t border-primary/20">
-                      <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase">
-                        Preview ({audioState.format.toUpperCase()})
-                      </p>
-                      <audio
-                        controls
-                        src={audioState.url}
-                        className="w-full h-12 rounded-lg"
-                        style={{ accentColor: "var(--primary)" }}
-                      >
-                        Your browser does not support the audio element.
-                      </audio>
-                    </div>
-                  )}
+              <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+                <Button
+                  onClick={handlePreviewAudio}
+                  disabled={isFetchingAudio}
+                  className="arch-button bg-gradient-to-r from-secondary to-primary text-secondary-foreground hover:shadow-xl hover:scale-105 transition-all duration-300 font-light tracking-wide"
+                >
+                  {isFetchingAudio ? "Rendering Audio..." : "Preview Audio"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleOpenScore}
+                  disabled={!musicXmlState || !audioState}
+                  className="border-primary/40 hover:border-primary transition-colors"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Preview Sheet
+                </Button>
+              </div>
 
-                  <div className="flex flex-wrap gap-3 justify-center md:justify-start border-t border-primary/20 pt-4">
-                    <Button
-                      asChild
-                      variant="outline"
-                      className="arch-button border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide"
-                    >
-                      <a href={midiState.url} download={midiState.filename || "output.mid"}>
-                        Download MIDI
-                      </a>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      disabled={!audioState}
-                      className="arch-button border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <a
-                        href={audioState?.url || "#"}
-                        download={audioState?.filename || "output.wav"}
-                        aria-disabled={!audioState}
-                      >
-                        Download WAV
-                      </a>
-                    </Button>
-                  </div>
+              {audioState && (
+                <div className="space-y-3 pt-4 border-t border-primary/20">
+                  <p className="text-xs font-light tracking-[0.2em] text-muted-foreground uppercase">
+                    Preview ({audioState.format.toUpperCase()})
+                  </p>
+                  <audio
+                    controls
+                    src={audioState.url}
+                    className="w-full h-12 rounded-lg"
+                    style={{ accentColor: "var(--primary)" }}
+                  >
+                    Your browser does not support the audio element.
+                  </audio>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 justify-center md:justify-start border-t border-primary/20 pt-4">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="arch-button border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide"
+                >
+                  <a href={midiState.url} download={midiState.filename || "output.mid"}>
+                    Download MIDI
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  disabled={!audioState}
+                  className="arch-button border-2 border-primary/40 hover:bg-primary/10 hover:border-primary transition-all duration-300 font-light tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <a
+                    href={audioState?.url || "#"}
+                    download={audioState?.filename || "output.wav"}
+                    aria-disabled={!audioState}
+                  >
+                    Download WAV
+                  </a>
+                </Button>
+              </div>
 
                   {/* <div className="text-xs text-muted-foreground font-light space-y-1 pt-4 border-t border-primary/10">
                     {musicXmlFilename && (
@@ -650,65 +646,49 @@ export default function FileUploadArea() {
                       </p>
                     )}
                   </div> */}
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* <div className="flex items-center justify-center gap-3 pt-4">
-            <span className="ornament-diamond text-primary/50"></span>
-            <p className="text-xs text-muted-foreground font-light tracking-[0.2em] uppercase">
-              PNG, JPG, or PDF
-            </p>
-            <span className="ornament-diamond text-primary/50"></span>
-          </div> */}
+              </div>
+            </Card>
         </div>
-      </Card>
+      )}
     </div>
 
     {isScoreOverlayOpen && musicXmlState && (
       <div className="fixed inset-0 z-50">
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={handleCloseScore} />
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl items-center justify-center p-4">
+        <div className="relative z-10 mx-auto flex h-full w-full max-w-7xl items-center justify-center p-4">
           <div className="relative w-full max-h-[90vh] overflow-hidden rounded-2xl border border-primary/30 bg-card shadow-2xl">
             <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
-              <div className="flex items-center gap-4">
-                {audioState && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => {
-                      if (scorePlaybackState.isPlaying) {
-                        scoreViewerRef.current?.stop()
-                      } else {
-                        scoreViewerRef.current?.play()
-                      }
-                    }}
-                    disabled={!scorePlaybackState.canPlay || scorePlaybackState.isInitializing}
-                  >
-                    {scorePlaybackState.isPlaying ? (
-                      <>
-                        <StopCircle className="h-4 w-4 mr-2" />
-                        Stop
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4 mr-2" />
-                        Play
-                      </>
-                    )}
-                  </Button>
-                )}
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Sheet Preview</p>
-                  <h3 className="text-sm font-light tracking-wide text-foreground">{musicXmlState.filename}</h3>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleCloseScore}>
+              {audioState && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    if (scorePlaybackState.isPlaying) {
+                      scoreViewerRef.current?.stop()
+                    } else {
+                      scoreViewerRef.current?.play()
+                    }
+                  }}
+                  disabled={!scorePlaybackState.canPlay || scorePlaybackState.isInitializing}
+                >
+                  {scorePlaybackState.isPlaying ? (
+                    <>
+                      <StopCircle className="h-4 w-4 mr-2" />
+                      Stop
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Play
+                    </>
+                  )}
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={handleCloseScore} className="ml-auto">
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="max-h-[calc(90vh-120px)] overflow-auto px-4 pb-6 pt-4">
+            <div className="max-h-[calc(90vh-80px)] overflow-y-auto px-4 pb-6 pt-4">
               <ScoreViewer
                 ref={scoreViewerRef}
                 musicXmlBase64={musicXmlState.b64}
