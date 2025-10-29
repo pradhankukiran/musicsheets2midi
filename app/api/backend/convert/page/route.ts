@@ -9,13 +9,14 @@ export async function POST(request: NextRequest) {
     const incomingFormData = await request.formData()
     const forwardFormData = new FormData()
 
-    incomingFormData.forEach((value, key) => {
+    for (const [key, value] of incomingFormData.entries()) {
       if (typeof value === "string") {
         forwardFormData.append(key, value)
       } else {
-        forwardFormData.append(key, value, value.name)
+        const blob = new Blob([await value.arrayBuffer()], { type: value.type })
+        forwardFormData.append(key, blob, value.name)
       }
-    })
+    }
 
     const upstreamResponse = await fetch(`${API_BASE}/convert/page`, {
       method: "POST",

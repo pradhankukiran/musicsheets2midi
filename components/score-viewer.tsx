@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, forwardRef } from "react"
 import JSZip from "jszip"
 import { Button } from "@/components/ui/button"
 
@@ -15,12 +15,23 @@ declare global {
 type ScoreViewerProps = {
   musicXmlBase64: string
   audioUrl?: string
+  showControls?: boolean
+  onPlaybackStateChange?: (isPlaying: boolean, canPlay: boolean, isInitializing: boolean) => void
+}
+
+export type ScoreViewerRef = {
+  play: () => void
+  stop: () => void
+  isPlaying: boolean
+  canPlay: boolean
+  isInitializing: boolean
 }
 
 const OSMD_SCRIPT_SRC =
   "https://unpkg.com/opensheetmusicdisplay@1.8.9/build/opensheetmusicdisplay.min.js"
 
-export function ScoreViewer({ musicXmlBase64, audioUrl }: ScoreViewerProps) {
+export const ScoreViewer = forwardRef<ScoreViewerRef, ScoreViewerProps>(
+  function ScoreViewer({ musicXmlBase64, audioUrl, showControls = true, onPlaybackStateChange }, ref) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const audioElementRef = useRef<HTMLAudioElement | null>(null)
   const osmdRef = useRef<any>(null)
@@ -196,10 +207,7 @@ export function ScoreViewer({ musicXmlBase64, audioUrl }: ScoreViewerProps) {
         })
 
         const xmlBytes = base64ToUint8Array(musicXmlBase64)
-        let resource: ArrayBuffer | string = xmlBytes.buffer.slice(
-          xmlBytes.byteOffset,
-          xmlBytes.byteOffset + xmlBytes.byteLength
-        )
+        let resource: string
 
         const isZip = xmlBytes[0] === 0x50 && xmlBytes[1] === 0x4b
         if (isZip) {
@@ -214,6 +222,10 @@ export function ScoreViewer({ musicXmlBase64, audioUrl }: ScoreViewerProps) {
           }
 
           resource = await zip.file(entryName)!.async("string")
+        } else {
+          // Convert ArrayBuffer to string for plain XML
+          const decoder = new TextDecoder("utf-8")
+          resource = decoder.decode(xmlBytes)
         }
 
         await osmdRef.current.load(resource)
@@ -384,6 +396,18 @@ export function ScoreViewer({ musicXmlBase64, audioUrl }: ScoreViewerProps) {
     return !audioUrl || !audioReady || isInitializing
   }, [audioUrl, audioReady, isInitializing])
 
+  useImperativeHandle(ref, () => ({
+    play: handlePlay,
+    stop: () => stopPlayback(true),
+    isPlaying,
+    canPlay: !disablePlay,
+    isInitializing,
+  }), [handlePlay, stopPlayback, isPlaying, disablePlay, isInitializing])
+
+  useEffect(() => {
+    onPlaybackStateChange?.(isPlaying, !disablePlay, isInitializing)
+  }, [isPlaying, disablePlay, isInitializing, onPlaybackStateChange])
+
   return (
     <div className="space-y-4">
       <div
@@ -398,20 +422,32 @@ export function ScoreViewer({ musicXmlBase64, audioUrl }: ScoreViewerProps) {
         </p>
       )}
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <Button onClick={handlePlay} disabled={disablePlay || isPlaying}>
-          {isInitializing ? "Loading score..." : isPlaying ? "Playing..." : "Play"}
-        </Button>
-        {audioUrl && (
-          <audio
-            ref={audioElementRef}
-            src={audioUrl}
-            controls
-            className="w-full md:w-auto"
-            preload="metadata"
-          />
-        )}
-      </div>
+      {showControls && (
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <Button onClick={handlePlay} disabled={disablePlay || isPlaying}>
+            {isInitializing ? "Loading score..." : isPlaying ? "Playing..." : "Play"}
+          </Button>
+          {audioUrl && (
+            <audio
+              ref={audioElementRef}
+              src={audioUrl}
+              controls
+              className="w-full md:w-auto"
+              preload="metadata"
+            />
+          )}
+        </div>
+      )}
+
+      {!showControls && audioUrl && (
+        <audio
+          ref={audioElementRef}
+          src={audioUrl}
+          controls
+          className="hidden"
+          preload="metadata"
+        />
+      )}
     </div>
   )
-}
+})

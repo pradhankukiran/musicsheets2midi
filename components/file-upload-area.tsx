@@ -2,12 +2,12 @@
 
 import type React from "react"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, CheckCircle2, Loader2, X, FileText } from "lucide-react"
-import { ScoreViewer } from "@/components/score-viewer"
+import { Upload, CheckCircle2, Loader2, X, FileText, Play, StopCircle } from "lucide-react"
+import { ScoreViewer, type ScoreViewerRef } from "@/components/score-viewer"
 
 const PROXY_BASE = "/api/backend/convert"
 
@@ -56,9 +56,15 @@ export default function FileUploadArea() {
   const [musicXmlState, setMusicXmlState] = useState<{ b64: string; filename: string } | null>(null)
   const [isScoreOverlayOpen, setIsScoreOverlayOpen] = useState(false)
   const [audioState, setAudioState] = useState<AudioState | null>(null)
-  const [mxlFilename, setMxlFilename] = useState<string>("")
+  const [musicXmlFilename, setMusicXmlFilename] = useState<string>("")
   const [selectedInstrument, setSelectedInstrument] = useState<string>("0")
+  const [scorePlaybackState, setScorePlaybackState] = useState({
+    isPlaying: false,
+    canPlay: false,
+    isInitializing: false,
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const scoreViewerRef = useRef<ScoreViewerRef>(null)
 
   const makeBlobUrlFromBase64 = (b64: string, mimeType: string) => {
     const binary = atob(b64)
@@ -82,7 +88,7 @@ export default function FileUploadArea() {
     setMidiState(null)
     setAudioState(null)
     setMusicXmlState(null)
-    setMxlFilename("")
+    setMusicXmlFilename("")
     setStatusMsg("")
     setErrorMsg("")
     setSelectedInstrument("0")
@@ -105,6 +111,22 @@ export default function FileUploadArea() {
   const handleCloseScore = () => {
     setIsScoreOverlayOpen(false)
   }
+
+  const handlePlaybackStateChange = useCallback((isPlaying: boolean, canPlay: boolean, isInitializing: boolean) => {
+    setScorePlaybackState({ isPlaying, canPlay, isInitializing })
+  }, [])
+
+  // Prevent body scrolling when modal is open
+  useEffect(() => {
+    if (isScoreOverlayOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isScoreOverlayOpen])
 
   useEffect(() => {
     return () => {
@@ -183,13 +205,31 @@ export default function FileUploadArea() {
     return { data, isPdf }
   }
 
-  const mxlToMidi = async (mxl_b64: string) => {
+  const musicXmlToMidi = async (payload: {
+    musicxml_b64: string
+    musicxml_filename?: string
+    mxl_b64?: string | null
+    mxl_filename?: string | null
+  }) => {
+    // Backend expects MusicXML data under the key "mxl_b64"
+    const bodyPayload: Record<string, any> = {
+      mxl_b64: payload.musicxml_b64,
+    }
+
+    if (payload.musicxml_filename) {
+      bodyPayload.musicxml_filename = payload.musicxml_filename
+    }
+
+    if (payload.mxl_filename) {
+      bodyPayload.mxl_filename = payload.mxl_filename
+    }
+
     const response = await fetch(`${PROXY_BASE}/midi`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ mxl_b64 }),
+      body: JSON.stringify(bodyPayload),
     })
 
     if (!response.ok) {
@@ -236,19 +276,34 @@ export default function FileUploadArea() {
     return { ...data, soundfont }
   }
 
-  const extractMxlPayload = (payload: any) => {
-    if (Array.isArray(payload?.pages) && payload.pages.length > 0) {
-      const okPages = payload.pages.filter((page: any) => page.status === "ok" || !page.status)
-      const firstPage = (okPages.length > 0 ? okPages[0] : payload.pages[0]) ?? null
+  const extractMusicXmlPayload = (payload: any, isPdf: boolean) => {
+    if (isPdf) {
+      const merged = payload?.merged
+      if (!merged?.musicxml_b64) {
+        throw new Error("Conversion service did not return merged MusicXML data.")
+      }
+
+      // Extract mxl_b64 from the first page if available
+      const pages = payload?.pages || []
+      const firstPage = pages.find((p: any) => p.status === "ok" && p.mxl_b64)
+
       return {
-        mxl_b64: firstPage?.mxl_b64,
-        mxl_filename: firstPage?.mxl_filename,
+        musicxml_b64: merged.musicxml_b64,
+        musicxml_filename: merged.musicxml_filename,
+        mxl_b64: firstPage?.mxl_b64 ?? null,
+        mxl_filename: firstPage?.mxl_filename ?? null,
       }
     }
 
+    if (!payload?.musicxml_b64) {
+      throw new Error("Conversion service did not return MusicXML data.")
+    }
+
     return {
-      mxl_b64: payload?.mxl_b64,
-      mxl_filename: payload?.mxl_filename,
+      musicxml_b64: payload.musicxml_b64,
+      musicxml_filename: payload.musicxml_filename,
+      mxl_b64: payload.mxl_b64 ?? null,
+      mxl_filename: payload.mxl_filename ?? null,
     }
   }
 
@@ -263,19 +318,25 @@ export default function FileUploadArea() {
       setErrorMsg("")
       setStatusMsg("Uploading sheet and extracting MusicXML...")
 
-      const { data } = await postFileForXML(file)
-      const { mxl_b64, mxl_filename } = extractMxlPayload(data)
+      const { data, isPdf } = await postFileForXML(file)
+      const { musicxml_b64, musicxml_filename, mxl_b64, mxl_filename } = extractMusicXmlPayload(data, isPdf)
 
-      if (!mxl_b64) {
+      if (!musicxml_b64) {
         throw new Error("No MusicXML data returned from the conversion service.")
       }
 
-      const resolvedMxlFilename = mxl_filename || file.name.replace(/\.[^/.]+$/, "") + ".mxl"
-      setMxlFilename(resolvedMxlFilename)
-      setMusicXmlState({ b64: mxl_b64, filename: resolvedMxlFilename })
+      const resolvedMusicXmlFilename =
+        musicxml_filename || file.name.replace(/\.[^/.]+$/, "") + ".musicxml"
+      setMusicXmlFilename(resolvedMusicXmlFilename)
+      setMusicXmlState({ b64: musicxml_b64, filename: resolvedMusicXmlFilename })
 
       setStatusMsg("Converting MusicXML to MIDI...")
-      const midiData = await mxlToMidi(mxl_b64)
+      const midiData = await musicXmlToMidi({
+        musicxml_b64,
+        musicxml_filename: resolvedMusicXmlFilename,
+        mxl_b64,
+        mxl_filename,
+      })
 
       revokeUrl(midiState?.url)
       const midiUrl = makeBlobUrlFromBase64(midiData.midi_b64, "audio/midi")
@@ -572,10 +633,10 @@ export default function FileUploadArea() {
                   </div>
 
                   {/* <div className="text-xs text-muted-foreground font-light space-y-1 pt-4 border-t border-primary/10">
-                    {mxlFilename && (
+                    {musicXmlFilename && (
                       <p className="flex items-center gap-2">
                         <span className="ornament-diamond text-primary"></span>
-                        MusicXML source: {mxlFilename}
+                        MusicXML source: {musicXmlFilename}
                       </p>
                     )}
                     <p className="flex items-center gap-2">
@@ -611,16 +672,50 @@ export default function FileUploadArea() {
         <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl items-center justify-center p-4">
           <div className="relative w-full max-h-[90vh] overflow-hidden rounded-2xl border border-primary/30 bg-card shadow-2xl">
             <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Sheet Preview</p>
-                <h3 className="text-lg font-light tracking-wide text-foreground">{musicXmlState.filename}</h3>
+              <div className="flex items-center gap-4">
+                {audioState && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => {
+                      if (scorePlaybackState.isPlaying) {
+                        scoreViewerRef.current?.stop()
+                      } else {
+                        scoreViewerRef.current?.play()
+                      }
+                    }}
+                    disabled={!scorePlaybackState.canPlay || scorePlaybackState.isInitializing}
+                  >
+                    {scorePlaybackState.isPlaying ? (
+                      <>
+                        <StopCircle className="h-4 w-4 mr-2" />
+                        Stop
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        Play
+                      </>
+                    )}
+                  </Button>
+                )}
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Sheet Preview</p>
+                  <h3 className="text-sm font-light tracking-wide text-foreground">{musicXmlState.filename}</h3>
+                </div>
               </div>
               <Button variant="ghost" size="icon" onClick={handleCloseScore}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <div className="max-h-[calc(90vh-120px)] overflow-auto px-4 pb-6 pt-4">
-              <ScoreViewer musicXmlBase64={musicXmlState.b64} audioUrl={audioState?.url} />
+              <ScoreViewer
+                ref={scoreViewerRef}
+                musicXmlBase64={musicXmlState.b64}
+                audioUrl={audioState?.url}
+                showControls={false}
+                onPlaybackStateChange={handlePlaybackStateChange}
+              />
             </div>
           </div>
         </div>
